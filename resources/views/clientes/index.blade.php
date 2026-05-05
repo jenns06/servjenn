@@ -11,6 +11,11 @@
 <div class="container">
     <h1 class="titulo">Lista de Clientes</h1>
 
+    <!-- MENSAJE -->
+    @if(session('success'))
+        <p style="color: green;">{{ session('success') }}</p>
+    @endif
+
     <!-- BUSCADOR -->
     <form method="GET" action="{{ url('/clientes') }}" class="formulario">
         <input type="text" name="buscar" placeholder="Buscar cliente..." value="{{ request('buscar') }}">
@@ -47,8 +52,8 @@
                     <td>{{ $cliente->telefono }}</td>
 
                     <td>
-                        <span class="estado {{ $cliente->estado }}">
-                            {{ ucfirst($cliente->estado) }}
+                        <span class="estado {{ $cliente->estado ?? 'pendiente' }}">
+                            {{ ucfirst($cliente->estado ?? 'pendiente') }}
                         </span>
                     </td>
 
@@ -58,7 +63,7 @@
                             ✏️ Editar
                         </a>
 
-                        <!-- ELIMINAR (DELETE correcto) -->
+                        <!-- ELIMINAR -->
                         <form action="/clientes/{{ $cliente->id_cliente }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
