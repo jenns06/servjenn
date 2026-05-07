@@ -22,11 +22,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        if (auth()->user()->role == 'admin') {
-            return redirect('/dashboard');
-        } else {
-            return redirect('/clientes');
-        }
+        return redirect('/dashboard');
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -37,6 +33,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/login');
     }
 }

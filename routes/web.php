@@ -2,153 +2,265 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\ProfileController;
+
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
-| Rutas públicas
+| RUTA INICIO
 |--------------------------------------------------------------------------
 */
-
 Route::get('/', function () {
     return view('welcome');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Dashboard
+| AUTH
 |--------------------------------------------------------------------------
 */
-
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+require __DIR__.'/auth.php';
 
 /*
 |--------------------------------------------------------------------------
-| Rutas protegidas (requieren login)
+| RUTAS PROTEGIDAS
 |--------------------------------------------------------------------------
 */
-
 Route::middleware(['auth'])->group(function () {
 
     /*
-    |-----------------------------
-    | Profile
-    |-----------------------------
+    |--------------------------------------------------------------------------
+    | DASHBOARD
+    |--------------------------------------------------------------------------
     */
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
     /*
-    |-----------------------------
-    | Prueba DB
-    |-----------------------------
+    |--------------------------------------------------------------------------
+    | PROFILE
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLIENTES
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/clientes', [ClienteController::class, 'index']);
+
+    Route::get('/clientes/create', [ClienteController::class, 'create']);
+
+    Route::post('/clientes', [ClienteController::class, 'store']);
+
+    Route::get('/clientes/{id}', [ClienteController::class, 'show']);
+
+    Route::get('/clientes/{id}/edit', [ClienteController::class, 'edit']);
+
+    Route::put('/clientes/{id}', [ClienteController::class, 'update']);
+
+    Route::delete('/clientes/{id}', [ClienteController::class, 'destroy']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACTUALIZAR ESTADO
+    |--------------------------------------------------------------------------
+    */
+    Route::put('/dispositivos/{id}/estado', function (
+        Illuminate\Http\Request $request,
+        $id
+    ) {
+
+        DB::table('dispositivos')
+            ->where('id_dispositivo', $id)
+            ->update([
+                'estado' => $request->estado
+            ]);
+
+        return back()->with(
+            'success',
+            'Estado actualizado correctamente'
+        );
+
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRUEBA BASE DE DATOS
+    |--------------------------------------------------------------------------
     */
     Route::get('/prueba', function () {
         return DB::table('clientes')->get();
     });
 
     /*
-    |-----------------------------
-    | Clientes (CRUD)
-    |-----------------------------
+    |--------------------------------------------------------------------------
+    | ADMIN - TECNICOS
+    |--------------------------------------------------------------------------
     */
-
-    // LISTAR + BUSCAR
-    Route::get('/clientes', [ClienteController::class, 'index']);
-
-    // FORMULARIO
-    Route::get('/clientes/create', [ClienteController::class, 'create']);
-
-    // GUARDAR
-    Route::post('/clientes', [ClienteController::class, 'store']);
-
-    // VER DETALLE
-    Route::get('/clientes/{id}', [ClienteController::class, 'show']);
-
-    // EDITAR
-    Route::get('/clientes/{id}/edit', [ClienteController::class, 'edit']);
-
-    // ACTUALIZAR
-    Route::put('/clientes/{id}', [ClienteController::class, 'update']);
-
-    // CAMBIAR ESTADO
-    Route::put('/dispositivos/{id}/estado', [ClienteController::class, 'updateEstado']);
-
-    // ELIMINAR
-    Route::delete('/clientes/{id}', [ClienteController::class, 'destroy']);
-});
-
-require __DIR__.'/auth.php';
-
-/*
-|-----------------------------
-| ADMIN - TÉCNICOS
-|-----------------------------
-*/
-Route::middleware(['auth'])->group(function () {
-
     Route::get('/admin/tecnicos', function () {
 
-        if (auth()->user()->role != 'admin') {
+        if (auth()->user()->role !== 'admin') {
             abort(403);
         }
 
-        $tecnicos = DB::table('users')
-            ->where('role', 'tecnico')
-            ->leftJoin('dispositivos', 'users.id', '=', 'dispositivos.id_tecnico')
-            ->select(
-                'users.id',
-                'users.name',
-                DB::raw('COUNT(dispositivos.id_dispositivo) as total_trabajos'),
-                DB::raw('SUM(dispositivos.precio) as total_dinero')
+        $tecnicos = DB::table('tecnicos')
+            ->leftJoin(
+                'dispositivos',
+                'tecnicos.id_tecnico',
+                '=',
+                'dispositivos.id_tecnico'
             )
-            ->groupBy('users.id', 'users.name')
+            ->select(
+                'tecnicos.id_tecnico',
+                'tecnicos.nombre as name',
+
+                DB::raw('COUNT(dispositivos.id_dispositivo) as total_trabajos'),
+
+                DB::raw('COALESCE(SUM(dispositivos.precio),0) as total_dinero')
+            )
+            ->groupBy(
+                'tecnicos.id_tecnico',
+                'tecnicos.nombre'
+            )
             ->get();
 
-        return view('admin.tecnicos', compact('tecnicos'));
+        return view('tecnicos', compact('tecnicos'));
     });
 
-});
-Route::get('/admin/tecnico/{id}', function ($id) {
+    /*
+    |--------------------------------------------------------------------------
+    | DETALLE TECNICO
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/admin/tecnico/{id}', function ($id) {
 
-    if (auth()->user()->role != 'admin') {
-        abort(403);
-    }
+        if (auth()->user()->role !== 'admin') {
+            abort(403);
+        }
 
-    $tecnico = DB::table('users')->where('id', $id)->first();
+        $tecnico = DB::table('tecnicos')
+            ->where('id_tecnico', $id)
+            ->first();
 
-    $trabajos = DB::table('dispositivos')
-        ->where('id_tecnico', $id)
-        ->get();
+        $trabajos = DB::table('dispositivos')
+            ->where('id_tecnico', $id)
+            ->get();
 
-    $total = DB::table('dispositivos')
-        ->where('id_tecnico', $id)
-        ->sum('precio');
+        $total = DB::table('dispositivos')
+            ->where('id_tecnico', $id)
+            ->sum('precio');
 
-    return view('admin.detalle_tecnico', compact('tecnico', 'trabajos', 'total'));
-});
-Route::post('/admin/pagar/{id}', function ($id) {
+        return view('detalle_tecnico', compact(
+            'tecnico',
+            'trabajos',
+            'total'
+        ));
+    });
 
-    if (auth()->user()->role != 'admin') {
-        abort(403);
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | PAGAR TECNICO
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/admin/pagar/{id}', function ($id) {
 
-    // calcular total del técnico
-    $total = DB::table('dispositivos')
-        ->where('id_tecnico', $id)
-        ->sum('precio');
+        if (auth()->user()->role !== 'admin') {
+            abort(403);
+        }
 
-    // guardar pago en nueva tabla
-    DB::table('pagos_tecnicos')->insert([
-        'id_tecnico' => $id,
-        'monto' => $total,
-        'fecha' => now(),
-        'estado' => 'pagado'
-    ]);
+        $total = DB::table('dispositivos')
+            ->where('id_tecnico', $id)
+            ->sum('precio');
 
-    return back()->with('success', 'Pago registrado correctamente 💰');
+        DB::table('pagos_tecnicos')->insert([
+            'id_tecnico' => $id,
+            'monto' => $total,
+            'fecha' => now(),
+            'estado' => 'pagado'
+        ]);
+
+        DB::table('notificaciones')->insert([
+            'id_usuario' => $id,
+            'mensaje' => 'Tu pago mensual fue realizado correctamente.',
+            'leida' => 0,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return back()->with(
+            'success',
+            'Pago registrado correctamente'
+        );
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | USUARIOS
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/admin/usuarios', function () {
+
+        if (auth()->user()->role !== 'admin') {
+            abort(403);
+        }
+
+        $usuarios = DB::table('users')->get();
+
+        return view('usuarios.index', compact('usuarios'));
+
+    });
+
+    Route::get('/admin/usuarios/create', function () {
+
+        if (auth()->user()->role !== 'admin') {
+            abort(403);
+        }
+
+        return view('usuarios.create');
+
+    });
+
+    Route::post('/admin/usuarios/create', function (
+        Illuminate\Http\Request $request
+    ) {
+
+        if (auth()->user()->role !== 'admin') {
+            abort(403);
+        }
+
+        DB::table('users')->insert([
+
+            'name' => $request->name,
+
+            'email' => $request->email,
+
+            'password' => bcrypt($request->password),
+
+            'role' => $request->role,
+
+            'created_at' => now(),
+
+            'updated_at' => now()
+
+        ]);
+
+        return redirect('/admin/usuarios')
+            ->with(
+                'success',
+                'Usuario creado correctamente'
+            );
+
+    });
+
 });
