@@ -4,40 +4,61 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ClienteController extends Controller
 {
-    // 📄 LISTAR CLIENTES
+    /**
+     * 📄 LISTAR CLIENTES (Dinámico por Rol)
+     */
     public function index(Request $request)
     {
         $buscar = $request->input('buscar');
+        $user = Auth::user();
 
-        $clientes = DB::table('clientes')
-            ->leftJoin('dispositivos', 'clientes.id_cliente', '=', 'dispositivos.id_cliente')
+        $query = DB::table('clientes')
+            ->join('dispositivos', 'clientes.id_cliente', '=', 'dispositivos.id_cliente')
+            ->leftJoin('users', 'dispositivos.id_tecnico', '=', 'users.id')
             ->select(
                 'clientes.*',
                 'dispositivos.estado',
                 'dispositivos.id_dispositivo',
                 'dispositivos.tipo',
                 'dispositivos.problema',
-                'dispositivos.precio'
-            )
-            ->when($buscar, function ($query, $buscar) {
-                $query->where('clientes.nombre', 'like', "%$buscar%")
-                      ->orWhere('clientes.telefono', 'like', "%$buscar%");
-            })
-            ->get();
+                'dispositivos.precio',
+                'users.name as nombre_tecnico'
+            );
+
+        // Seguridad: El técnico solo ve lo suyo, el Admin ve todo
+        if ($user->role !== 'admin') {
+            $query->where('dispositivos.id_tecnico', $user->id);
+        }
+
+        if ($buscar) {
+            $query->where(function($q) use ($buscar) {
+                $q->where('clientes.nombre', 'like', "%$buscar%")
+                  ->orWhere('clientes.telefono', 'like', "%$buscar%")
+                  ->orWhere('dispositivos.tipo', 'like', "%$buscar%");
+            });
+        }
+
+        $clientes = $query->orderBy('dispositivos.id_dispositivo', 'desc')->get();
 
         return view('clientes.index', compact('clientes'));
     }
 
-    // 📄 FORMULARIO
+    /**
+     * 📄 FORMULARIO DE REGISTRO
+     */
     public function create()
     {
-        return view('clientes.create');
+        $tecnicos = DB::table('users')->where('role', 'tecnico')->get();
+        return view('clientes.create', compact('tecnicos'));
     }
 
-    // 💾 GUARDAR
+    /**
+     * 💾 GUARDAR NUEVO SERVICIO
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -49,115 +70,114 @@ class ClienteController extends Controller
             'tipo_pago' => 'required|in:efectivo,tarjeta,transferencia'
         ]);
 
-        $idTecnico = DB::table('tecnicos')->value('id_tecnico');
+        // --- LÓGICA DE ASIGNACIÓN REAL ---
+        // Obtenemos el ID del técnico que está logueado en este momento (David, Tecnico, etc.)
+        $idTecnicoResponsable = Auth::id();
 
+        // 1. Insertar Cliente
         $clienteId = DB::table('clientes')->insertGetId([
             'nombre' => $request->nombre,
             'telefono' => $request->telefono
         ]);
 
+        // 2. Insertar Dispositivo vinculado al técnico que lo crea
         $dispositivoId = DB::table('dispositivos')->insertGetId([
             'id_cliente' => $clienteId,
-            'id_tecnico' => $idTecnico,
+            'id_tecnico' => $idTecnicoResponsable, 
             'tipo' => $request->dispositivo,
             'problema' => $request->descripcion,
             'estado' => 'pendiente',
             'precio' => $request->precio,
-            'creado_por' => $idTecnico,
             'fecha_registro' => now()
         ]);
 
+        // 3. Registrar Pago inicial para contabilidad
         DB::table('pagos')->insert([
             'id_dispositivo' => $dispositivoId,
             'tipo_pago' => $request->tipo_pago,
             'monto' => $request->precio,
-            'fecha' => now(),
-            'registrado_por' => $idTecnico,
-            'supervisado_por' => $idTecnico
+            'fecha' => now()
         ]);
 
         return redirect('/clientes')->with('success', 'Servicio registrado correctamente ✔');
     }
 
-    // 📄 DETALLE
-    public function show($id)
-    {
-        $cliente = DB::table('clientes')
-            ->join('dispositivos', 'clientes.id_cliente', '=', 'dispositivos.id_cliente')
-            ->where('clientes.id_cliente', $id)
-            ->select('clientes.*', 'dispositivos.*')
-            ->first();
-
-        if (!$cliente) {
-            return redirect('/clientes')->with('error', 'Cliente no encontrado');
-        }
-
-        return view('clientes.show', compact('cliente'));
-    }
-
-    // ✏️ EDITAR
+    /**
+     * ✏️ FORMULARIO DE EDICIÓN
+     */
     public function edit($id)
     {
-        $cliente = DB::table('clientes')
+        $user = Auth::user();
+        $query = DB::table('clientes')
             ->join('dispositivos', 'clientes.id_cliente', '=', 'dispositivos.id_cliente')
-            ->where('clientes.id_cliente', $id)
-            ->select('clientes.*', 'dispositivos.*')
-            ->first();
+            ->where('clientes.id_cliente', $id);
+
+        if ($user->role !== 'admin') {
+            $query->where('dispositivos.id_tecnico', $user->id);
+        }
+
+        $cliente = $query->select('clientes.*', 'dispositivos.*')->first();
+
+        if (!$cliente) {
+            return redirect('/clientes')->with('error', 'No tienes permiso o el registro no existe.');
+        }
 
         return view('clientes.edit', compact('cliente'));
     }
 
-    // 🔄 ACTUALIZAR
+    /**
+     * 🔄 ACTUALIZAR DATOS
+     */
     public function update(Request $request, $id)
     {
-        DB::table('clientes')
-            ->where('id_cliente', $id)
-            ->update([
-                'nombre' => $request->nombre,
-                'telefono' => $request->telefono
-            ]);
+        $user = Auth::user();
 
-        DB::table('dispositivos')
-            ->where('id_cliente', $id)
-            ->update([
-                'tipo' => $request->dispositivo,
-                'problema' => $request->descripcion,
-                'precio' => $request->precio
-            ]);
-
-        return redirect('/clientes')->with('success', 'Actualizado correctamente ✔');
-    }
-
-    // 🔄 ESTADO
-    public function updateEstado(Request $request, $id)
-    {
-        $request->validate([
-            'estado' => 'required|in:pendiente,proceso,listo'
-        ]);
-
-        DB::table('dispositivos')
-            ->where('id_dispositivo', $id)
-            ->update([
-                'estado' => $request->estado
-            ]);
-
-        return back()->with('success', 'Estado actualizado correctamente ✔');
-    }
-
-    // 🗑 ELIMINAR (CORREGIDO)
-    public function destroy($id)
-    {
-        $dispositivo = DB::table('dispositivos')
-            ->where('id_cliente', $id)
-            ->first();
-
-        if ($dispositivo) {
-            DB::table('pagos')->where('id_dispositivo', $dispositivo->id_dispositivo)->delete();
-            DB::table('dispositivos')->where('id_cliente', $id)->delete();
+        $dispositivo = DB::table('dispositivos')->where('id_cliente', $id);
+        if ($user->role !== 'admin') {
+            $dispositivo->where('id_tecnico', $user->id);
+        }
+        
+        if (!$dispositivo->exists()) {
+            return redirect('/clientes')->with('error', 'Acción no autorizada.');
         }
 
+        DB::table('clientes')->where('id_cliente', $id)->update([
+            'nombre' => $request->nombre,
+            'telefono' => $request->telefono
+        ]);
+
+        DB::table('dispositivos')->where('id_cliente', $id)->update([
+            'tipo' => $request->dispositivo,
+            'problema' => $request->descripcion,
+            'precio' => $request->precio,
+            'estado' => $request->estado 
+        ]);
+
+        return redirect('/clientes')->with('success', 'Información actualizada ✔');
+    }
+
+    /**
+     * 🗑 ELIMINAR CLIENTE
+     */
+    public function destroy($id)
+    {
+        $user = Auth::user();
+        $query = DB::table('dispositivos')->where('id_cliente', $id);
+
+        if ($user->role !== 'admin') {
+            $query->where('id_tecnico', $user->id);
+        }
+
+        $dispositivo = $query->first();
+
+        if (!$dispositivo) {
+            return redirect('/clientes')->with('error', 'No puedes eliminar este registro.');
+        }
+
+        DB::table('pagos')->where('id_dispositivo', $dispositivo->id_dispositivo)->delete();
+        DB::table('dispositivos')->where('id_cliente', $id)->delete();
         DB::table('clientes')->where('id_cliente', $id)->delete();
 
-        return redirect('/clientes')->with('success', 'Cliente eliminado con éxito 🗑');
+        return redirect('/clientes')->with('success', 'Eliminado correctamente 🗑');
     }
 }
