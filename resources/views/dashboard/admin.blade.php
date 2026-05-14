@@ -262,6 +262,8 @@
             padding:30px;
             margin-bottom:30px;
             box-shadow:0 8px 25px rgba(0,0,0,.04);
+            /* AÑADIDO PARA RESPONSIVE */
+            overflow-x: auto;
         }
 
         .tabla-box h2{
@@ -343,7 +345,10 @@
         @media(max-width:900px){
 
             .sidebar{
-                display:none;
+                position: relative;
+                width: 100%;
+                height: auto;
+                border-radius: 0 0 25px 25px;
             }
 
             .contenido{
@@ -357,6 +362,9 @@
                 gap:20px;
             }
 
+        }
+        html {
+            scroll-behavior: smooth;
         }
 
     </style>
@@ -389,9 +397,9 @@
                 Clientes
             </a>
 
-            <a href="#">
+            <a href="#tabla-dispositivos"> 
                 <i class="fa-solid fa-laptop"></i>
-                Dispositivos
+                 Dispositivos
             </a>
 
             <a href="/admin/usuarios">
@@ -542,6 +550,7 @@
                         <th>Nombre</th>
                         <th>Trabajos</th>
                         <th>Total Generado</th>
+                        <th style="color: #16a34a;">Total Pago (35%)</th>
                         <th>Acciones</th>
                     </tr>
 
@@ -550,6 +559,10 @@
                 <tbody>
 
                     @foreach($tecnicos as $tec)
+                    @php
+                        // CÁLCULO DEL 35%
+                        $comision = $tec->total_dinero * 0.35;
+                    @endphp
 
                     <tr>
 
@@ -558,6 +571,8 @@
                         <td>{{ $tec->total_trabajos }}</td>
 
                         <td>${{ $tec->total_dinero }}</td>
+
+                        <td><strong style="color: #16a34a;">${{ number_format($comision, 2) }}</strong></td>
 
                         <td>
 
@@ -590,7 +605,7 @@
 
                                         <button type="button"
                                                 class="btn-pagar"
-                                                onclick="confirmarPago('formPago{{ $tec->id_tecnico }}')">
+                                                onclick="confirmarPago('formPago{{ $tec->id_tecnico }}', '{{ number_format($comision, 2) }}')">
 
                                             Avisar Pago
 
@@ -615,8 +630,7 @@
         </div>
 
         {{-- TABLA DISPOSITIVOS --}}
-        <div class="tabla-box">
-
+        <div class="tabla-box" id="tabla-dispositivos"> 
             <h2>Últimos Dispositivos</h2>
 
             <table class="table">
@@ -666,7 +680,6 @@
             </table>
 
         </div>
-
     </div>
 
 <script>
@@ -682,16 +695,16 @@ function mostrarInfoPago(){
 
 }
 
-function confirmarPago(formId){
+function confirmarPago(formId, monto){
 
     Swal.fire({
         title:'¿Registrar pago?',
-        text:'Se notificará el pago del técnico.',
+        text:'Se notificará al técnico que ganó $' + monto + ' y que ya se realizó su pago.',
         icon:'question',
         showCancelButton:true,
         confirmButtonColor:'#22c55e',
         cancelButtonColor:'#f43f5e',
-        confirmButtonText:'Sí, registrar',
+        confirmButtonText:'Sí, avisar pago',
         cancelButtonText:'Cancelar'
     }).then((result)=>{
 

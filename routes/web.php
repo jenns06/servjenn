@@ -2,10 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\NotificacionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,13 +75,21 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | NOTIFICACIONES (AGREGADO PARA LA "X" Y LECTURA)
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/notificaciones/leer', [NotificacionController::class, 'marcarComoLeidas'])
+        ->name('notificaciones.leer');
+
+    Route::delete('/notificaciones/eliminar/{id}', [NotificacionController::class, 'eliminar'])
+        ->name('notificaciones.eliminar');
+
+    /*
+    |--------------------------------------------------------------------------
     | ACTUALIZAR ESTADO
     |--------------------------------------------------------------------------
     */
-    Route::put('/dispositivos/{id}/estado', function (
-        Illuminate\Http\Request $request,
-        $id
-    ) {
+    Route::put('/dispositivos/{id}/estado', function (Request $request, $id) {
 
         DB::table('dispositivos')
             ->where('id_dispositivo', $id)
@@ -170,7 +180,7 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | PAGAR TECNICO
+    | PAGAR TECNICO (CORREGIDO AL 35%)
     |--------------------------------------------------------------------------
     */
     Route::post('/admin/pagar/{id}', function ($id) {
@@ -179,20 +189,23 @@ Route::middleware(['auth'])->group(function () {
             abort(403);
         }
 
-        $total = DB::table('dispositivos')
+        // Cálculo del 35%
+        $totalGenerado = DB::table('dispositivos')
             ->where('id_tecnico', $id)
             ->sum('precio');
+            
+        $monto35 = $totalGenerado * 0.35;
 
         DB::table('pagos_tecnicos')->insert([
             'id_tecnico' => $id,
-            'monto' => $total,
+            'monto' => $monto35,
             'fecha' => now(),
             'estado' => 'pagado'
         ]);
 
         DB::table('notificaciones')->insert([
             'id_usuario' => $id,
-            'mensaje' => 'Tu pago mensual fue realizado correctamente.',
+            'mensaje' => 'Se ha realizado tu pago de $' . number_format($monto35, 2) . ' (tu 35% de ganancia).',
             'leida' => 0,
             'created_at' => now(),
             'updated_at' => now()
@@ -200,7 +213,7 @@ Route::middleware(['auth'])->group(function () {
 
         return back()->with(
             'success',
-            'Pago registrado correctamente'
+            'Pago registrado y notificación enviada'
         );
     });
 
@@ -231,28 +244,19 @@ Route::middleware(['auth'])->group(function () {
 
     });
 
-    Route::post('/admin/usuarios/create', function (
-        Illuminate\Http\Request $request
-    ) {
+    Route::post('/admin/usuarios/create', function (Request $request) {
 
         if (auth()->user()->role !== 'admin') {
             abort(403);
         }
 
         DB::table('users')->insert([
-
             'name' => $request->name,
-
             'email' => $request->email,
-
             'password' => bcrypt($request->password),
-
             'role' => $request->role,
-
             'created_at' => now(),
-
             'updated_at' => now()
-
         ]);
 
         return redirect('/admin/usuarios')

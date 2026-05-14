@@ -33,8 +33,12 @@
             background: var(--primary-grad);
             background-attachment: fixed;
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 20px 15px; /* Ajustado para móviles */
             color: #1e293b;
+        }
+
+        @media (min-width: 768px) {
+            body { padding: 40px 20px; }
         }
 
         .container-custom {
@@ -42,53 +46,76 @@
             margin: 0 auto;
         }
 
-        /* TOPBAR */
+        /* TOPBAR RESPONSIVO */
         .topbar {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
+            flex-direction: column; /* Por defecto apilado */
+            gap: 20px;
+            margin-bottom: 30px;
             background: var(--glass);
-            padding: 20px 30px;
-            border-radius: 25px;
+            padding: 20px;
+            border-radius: 20px;
             backdrop-filter: blur(10px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             border: 1px solid rgba(255,255,255,0.3);
+            position: relative;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .topbar {
+                flex-direction: row; /* Horizontal en PC */
+                justify-content: space-between;
+                align-items: center;
+                text-align: left;
+                padding: 20px 30px;
+                border-radius: 25px;
+            }
         }
 
         .titulo h1 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: #4338ca;
             margin: 0;
         }
 
+        @media (min-width: 768px) {
+            .titulo h1 { font-size: 24px; }
+        }
+
         .titulo p {
             margin: 0;
-            font-size: 14px;
+            font-size: 12px;
             color: #64748b;
         }
 
         .acciones {
             display: flex;
             align-items: center;
-            gap: 20px;
+            justify-content: center; /* Centrado en móvil */
+            gap: 15px;
         }
 
-        /* CAMPANA Y DROPDOWN */
+        @media (min-width: 768px) {
+            .acciones { gap: 20px; }
+        }
+
+        /* NOTIFICACIONES */
         .notif-wrapper {
             position: relative;
         }
 
         .campana {
             background: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
             transition: .3s;
             color: #6366f1;
@@ -96,7 +123,9 @@
             border: none;
         }
 
-        .campana:hover { transform: translateY(-3px); background: #f8fafc; }
+        @media (min-width: 768px) {
+            .campana { width: 50px; height: 50px; border-radius: 15px; font-size: 20px; }
+        }
 
         .badge-custom {
             position: absolute;
@@ -104,10 +133,10 @@
             right: -5px;
             background: #f43f5e;
             color: white;
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -115,53 +144,64 @@
             border: 2px solid white;
         }
 
-        /* MENU DE NOTIFICACIONES */
+        /* DROPDOWN DE NOTIFICACIONES RESPONSIVO */
         .dropdown-notif {
             position: absolute;
-            right: 0;
-            top: 60px;
-            width: 300px;
+            right: -70px; /* Ajuste para que no se corte en móvil */
+            top: 55px;
+            width: 280px;
             background: white;
-            border-radius: 20px;
+            border-radius: 15px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.15);
             display: none;
-            z-index: 1000;
+            z-index: 1100;
             overflow: hidden;
             border: 1px solid #f1f5f9;
+        }
+
+        @media (min-width: 768px) {
+            .dropdown-notif { right: 0; width: 320px; border-radius: 20px; top: 60px; }
         }
 
         .dropdown-notif.active { display: block; animation: slideIn 0.3s ease; }
 
         .dropdown-header {
-            padding: 15px 20px;
+            padding: 12px 15px;
             background: #f8fafc;
             border-bottom: 1px solid #f1f5f9;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
         }
 
-        .dropdown-body { max-height: 300px; overflow-y: auto; }
+        .dropdown-body { max-height: 250px; overflow-y: auto; }
 
         .noti-item {
-            padding: 15px 20px;
+            padding: 12px 15px;
             border-bottom: 1px solid #f8fafc;
-            font-size: 13px;
-            transition: .2s;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .noti-item:hover { background: #f1f5f9; }
 
-        /* CARDS */
+        /* CARDS RESPONSIVAS */
         .cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: 1fr; /* 1 columna móvil */
+            gap: 20px;
             margin-bottom: 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (min-width: 768px) {
+            .cards { grid-template-columns: repeat(2, 1fr); gap: 25px; } /* 2 columnas PC */
         }
 
         .card-custom {
             background: var(--glass);
-            padding: 40px 30px;
-            border-radius: 30px;
+            padding: 30px 20px;
+            border-radius: 25px;
             text-align: center;
             backdrop-filter: blur(10px);
             box-shadow: 0 15px 35px rgba(0,0,0,0.1);
@@ -169,52 +209,34 @@
             transition: .4s;
         }
 
-        .card-custom:hover { transform: translateY(-10px); background: rgba(255,255,255,0.95); }
-
-        .card-icon {
-            width: 70px;
-            height: 70px;
-            background: #e0e7ff;
-            color: #4338ca;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            margin: 0 auto 20px;
-        }
-
-        .card-custom h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 15px; }
-        .card-custom p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 25px; }
-
         .btn-action {
             background: var(--primary-grad);
             color: white !important;
-            padding: 12px 30px;
-            border-radius: 15px;
+            padding: 10px 25px;
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             display: inline-block;
             box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
             transition: .3s;
+            width: 100%; /* Botón ancho en móvil */
         }
 
-        .btn-action:hover { transform: scale(1.05); box-shadow: 0 12px 25px rgba(99, 102, 241, 0.4); }
+        @media (min-width: 768px) {
+            .btn-action { width: auto; padding: 12px 30px; border-radius: 15px; font-size: 14px; }
+        }
 
         .btn-logout {
             background: #fda4af;
             color: #991b1b;
             border: none;
-            padding: 12px 20px;
-            border-radius: 15px;
+            padding: 12px 18px;
+            border-radius: 12px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
-            transition: .3s;
         }
-
-        .btn-logout:hover { background: #f43f5e; color: white; }
 
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -239,8 +261,11 @@
             <div class="notif-wrapper">
                 <button class="campana" id="btnCampana" onclick="toggleNotificaciones()">
                     <i class="fa-solid fa-bell"></i>
-                    @if($notificaciones->count() > 0)
-                        <div class="badge-custom">{{ $notificaciones->count() }}</div>
+                    @php
+                        $unreadCount = $notificaciones->where('leida', 0)->count();
+                    @endphp
+                    @if($unreadCount > 0)
+                        <div class="badge-custom" id="badgeNotif">{{ $unreadCount }}</div>
                     @endif
                 </button>
 
@@ -248,12 +273,17 @@
                     <div class="dropdown-header">Notificaciones Recientes</div>
                     <div class="dropdown-body">
                         @forelse($notificaciones as $n)
-                            <div class="noti-item">
-                                <i class="fa-solid fa-circle-info text-primary me-2"></i>
-                                {{ $n->mensaje }}
+                            <div class="noti-item" id="notif-{{ $n->id }}">
+                                <div class="noti-text">
+                                    <i class="fa-solid fa-circle-info text-primary me-2"></i>
+                                    {{ $n->mensaje }}
+                                </div>
+                                <button class="btn-delete-notif" onclick="eliminarNotificacion({{ $n->id }})">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
                             </div>
                         @empty
-                            <div class="noti-item text-center text-muted">No hay novedades</div>
+                            <div class="noti-item text-center text-muted p-3">No hay novedades</div>
                         @endforelse
                     </div>
                 </div>
@@ -270,63 +300,70 @@
     </div>
 
     {{-- MENSAJE BIENVENIDA --}}
-    <div class="mb-4 text-white">
+    <div class="mb-4 text-white text-center text-md-start">
         <h4 style="font-weight: 300;">Hola, <strong>{{ auth()->user()->name }}</strong> 👋</h4>
-        <p style="opacity: 0.8; font-size: 14px;">¿Qué vamos a gestionar hoy?</p>
+        <p style="opacity: 0.8; font-size: 13px;">¿Qué vamos a gestionar hoy?</p>
     </div>
 
     {{-- CARDS DE ACCIÓN --}}
     <div class="cards">
-
         <div class="card-custom">
             <div class="card-icon"><i class="fa-solid fa-user-group"></i></div>
             <h2>Ver Clientes</h2>
             <p>Accede a la base de datos completa de clientes y sus estados de reparación.</p>
-            <a href="/clientes" class="btn-action">
-                Ir a Clientes <i class="fa-solid fa-arrow-right ms-2"></i>
-            </a>
+            <a href="/clientes" class="btn-action">Ir a Clientes <i class="fa-solid fa-arrow-right ms-2"></i></a>
         </div>
 
         <div class="card-custom">
             <div class="card-icon"><i class="fa-solid fa-laptop-medical"></i></div>
             <h2>Nuevo Registro</h2>
             <p>Agrega un nuevo cliente a la plataforma y asigna su equipo técnico de inmediato.</p>
-            <a href="/clientes/create" class="btn-action">
-                Registrar Ahora <i class="fa-solid fa-plus ms-2"></i>
-            </a>
+            <a href="/clientes/create" class="btn-action">Registrar Ahora <i class="fa-solid fa-plus ms-2"></i></a>
         </div>
-
     </div>
-
 </div>
 
 <script>
-    // Mostrar/Ocultar menú de notificaciones
     function toggleNotificaciones() {
         const menu = document.getElementById('menuNotif');
+        const badge = document.getElementById('badgeNotif');
         menu.classList.toggle('active');
+        if (menu.classList.contains('active') && badge) {
+            badge.style.display = 'none';
+            fetch("{{ route('notificaciones.leer') }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            }).catch(err => console.error(err));
+        }
     }
 
-    // Cerrar el menú si se hace clic fuera
+    function eliminarNotificacion(id) {
+        const row = document.getElementById('notif-' + id);
+        if (row) row.remove();
+        fetch(`/notificaciones/eliminar/${id}`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        }).catch(err => console.error(err));
+    }
+
     window.onclick = function(event) {
         if (!event.target.closest('.notif-wrapper')) {
             document.getElementById('menuNotif').classList.remove('active');
         }
     }
 
-    // Confirmación de salida con SweetAlert2
     function confirmarSalida() {
         Swal.fire({
             title: '¿Cerrar sesión?',
-            text: "Se guardarán tus cambios actuales.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#6366f1',
             cancelButtonColor: '#f43f5e',
             confirmButtonText: 'Sí, salir',
-            cancelButtonText: 'Cancelar',
-            background: '#ffffff',
-            borderRadius: '25px'
+            cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById('logoutForm').submit();
