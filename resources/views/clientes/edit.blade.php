@@ -14,7 +14,7 @@
     <style>
         :root {
             --primary-grad: linear-gradient(135deg, #6366f1, #8b5cf6);
-            --glass: rgba(255, 255, 255, 0.9);
+            --glass: rgba(255, 255, 255, 0.95);
             --text-dark: #1e293b;
             --text-light: #64748b;
         }
@@ -87,7 +87,7 @@
             margin-left: 5px;
         }
 
-        input, textarea, select {
+        input, textarea {
             padding: 12px 18px;
             border-radius: 15px;
             border: 1px solid #e2e8f0;
@@ -96,24 +96,68 @@
             color: var(--text-dark);
             transition: .3s;
             outline: none;
+            width: 100%;
+            height: 50px;
         }
 
-        input:focus, textarea:focus, select:focus {
+        textarea {
+            height: 120px;
+            resize: none;
+        }
+
+        input:focus, textarea:focus {
             border-color: #6366f1;
             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
-        textarea {
-            height: 100px;
-            resize: none;
+        /* --- NUEVO DISEÑO DE CHECKLIST (RADIO BUTTONS) --- */
+        .status-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(241, 245, 249, 0.5);
+            padding: 15px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
         }
 
+        .status-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.3s;
+        }
+
+        .status-option:hover {
+            background: #f8fafc;
+        }
+
+        .status-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #6366f1; /* Color del punto al marcar */
+        }
+
+        .status-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        /* --- BOTÓN GUARDAR --- */
         .btn-actualizar {
             grid-column: span 2;
             background: var(--primary-grad);
             color: white;
             border: none;
-            padding: 15px;
+            height: 55px;
             border-radius: 15px;
             font-size: 16px;
             font-weight: 600;
@@ -121,6 +165,11 @@
             transition: .3s;
             margin-top: 10px;
             box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
         }
 
         .btn-actualizar:hover {
@@ -135,25 +184,19 @@
             text-decoration: none;
             font-size: 14px;
             margin-top: 15px;
+            display: block;
         }
 
-        /* Notificación */
-        .notificacion {
-            grid-column: span 2;
-            background: #dcfce7;
-            color: #15803d;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 20px;
-        }
-
-        @media (max-width: 600px) {
-            .formulario { grid-template-columns: 1fr; }
-            .full-width { grid-column: span 1; }
-            .btn-actualizar { grid-column: span 1; }
+        /* --- RESPONSIVO --- */
+        @media (max-width: 650px) {
+            body { padding: 15px; }
+            .container { padding: 30px 20px; border-radius: 25px; }
+            .formulario { 
+                display: flex;
+                flex-direction: column; 
+                gap: 15px; 
+            }
+            .titulo { font-size: 24px; }
         }
     </style>
 </head>
@@ -166,59 +209,56 @@
         <p style="color: #64748b; font-size: 14px;">Actualiza la información técnica del cliente</p>
     </div>
 
-    @if(session('success'))
-        <div class="notificacion">
-            <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-        </div>
-    @endif
-
     <form method="POST" action="/clientes/{{ $cliente->id_cliente }}" class="formulario">
         @csrf
         @method('PUT')
 
-        {{-- Nombre del Cliente --}}
         <div class="campo">
             <label><i class="fa-solid fa-user me-1"></i> Nombre del Cliente</label>
-            <input type="text" name="nombre" value="{{ $cliente->nombre }}" placeholder="Ej. Juan Pérez" required>
+            <input type="text" name="nombre" value="{{ $cliente->nombre }}" required>
         </div>
 
-        {{-- Teléfono --}}
         <div class="campo">
             <label><i class="fa-solid fa-phone me-1"></i> Teléfono</label>
-            <input type="text" name="telefono" value="{{ $cliente->telefono }}" maxlength="10"
-                   oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="0999999999" required>
+            <input type="text" name="telefono" value="{{ $cliente->telefono }}" maxlength="10" required>
         </div>
 
-        {{-- Dispositivo --}}
         <div class="campo">
             <label><i class="fa-solid fa-laptop me-1"></i> Dispositivo</label>
-            <input type="text" name="dispositivo" value="{{ $cliente->tipo }}" placeholder="Ej. Laptop Dell" required>
+            <input type="text" name="dispositivo" value="{{ $cliente->tipo }}" required>
         </div>
 
-        {{-- Estado / Proceso --}}
+        {{-- NUEVO CHECKLIST DE ESTADO --}}
         <div class="campo">
-            <label><i class="fa-solid fa-spinner me-1"></i> Estado del Proceso</label>
-            <select name="estado" required>
-                <option value="pendiente" {{ $cliente->estado == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                <option value="proceso" {{ $cliente->estado == 'proceso' ? 'selected' : '' }}>En Proceso</option>
-                <option value="finalizado" {{ $cliente->estado == 'finalizado' ? 'selected' : '' }}>Finalizado / Listo</option>
-            </select>
+            <label><i class="fa-solid fa-list-check me-1"></i> Estado del Proceso</label>
+            <div class="status-group">
+                <label class="status-option">
+                    <input type="radio" name="estado" value="pendiente" {{ $cliente->estado == 'pendiente' ? 'checked' : '' }}>
+                    <span class="status-label">Pendiente</span>
+                </label>
+                <label class="status-option">
+                    <input type="radio" name="estado" value="proceso" {{ $cliente->estado == 'proceso' ? 'checked' : '' }}>
+                    <span class="status-label">En Proceso</span>
+                </label>
+                <label class="status-option">
+                    <input type="radio" name="estado" value="finalizado" {{ $cliente->estado == 'finalizado' ? 'checked' : '' }}>
+                    <span class="status-label">Finalizado / Listo</span>
+                </label>
+            </div>
         </div>
 
-        {{-- Descripción del problema --}}
         <div class="campo full-width">
-            <label><i class="fa-solid fa-comment-dots me-1"></i> Descripción del Problema / Diagnóstico</label>
-            <textarea name="descripcion" placeholder="Detalla el fallo del equipo..." required>{{ $cliente->problema }}</textarea>
+            <label><i class="fa-solid fa-comment-dots me-1"></i> Descripción / Diagnóstico</label>
+            <textarea name="descripcion" required>{{ $cliente->problema }}</textarea>
         </div>
 
-        {{-- Precio --}}
         <div class="campo full-width">
-            <label><i class="fa-solid fa-hand-holding-dollar me-1"></i> Precio del Servicio ($)</label>
-            <input type="number" name="precio" value="{{ $cliente->precio }}" step="0.01" placeholder="0.00" required>
+            <label><i class="fa-solid fa-hand-holding-dollar me-1"></i> Precio ($)</label>
+            <input type="number" name="precio" value="{{ $cliente->precio }}" step="0.01" required>
         </div>
 
         <button type="submit" class="btn-actualizar">
-            <i class="fa-solid fa-save me-2"></i> Guardar Cambios
+            <i class="fa-solid fa-save"></i> Guardar Cambios
         </button>
 
         <a href="/dashboard" class="btn-cancelar">Volver al panel principal</a>

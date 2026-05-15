@@ -15,16 +15,17 @@
         }
 
         body {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Fondo con gradiente más profundo */
             background: linear-gradient(135deg, #6c7cff 0%, #3f3f8c 100%);
-            overflow: hidden;
+            /* Permitir scroll en pantallas muy pequeñas o con teclado abierto */
+            overflow-x: hidden;
+            padding: 20px;
         }
 
-        /* Burbujas decorativas de fondo (opcional para dar profundidad) */
+        /* Burbujas decorativas */
         body::before, body::after {
             content: "";
             position: absolute;
@@ -37,9 +38,10 @@
         body::before { top: -100px; left: -100px; }
         body::after { bottom: -100px; right: -100px; }
 
-        /* TARJETA GLASSMORPHISM */
+        /* TARJETA GLASSMORPHISM RESPONSIVE */
         .card {
-            width: 380px;
+            width: 100%;
+            max-width: 400px; /* Ancho máximo para escritorio */
             padding: 40px 30px;
             border-radius: 24px;
             background: rgba(255, 255, 255, 0.12);
@@ -58,7 +60,8 @@
         }
 
         .logo {
-            width: 120px;
+            width: 100px;
+            height: auto;
             margin-bottom: 15px;
             filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
             transition: transform 0.3s ease;
@@ -70,7 +73,7 @@
 
         h2 {
             margin-bottom: 5px;
-            font-size: 26px;
+            font-size: clamp(1.5rem, 5vw, 1.8rem); /* Tamaño fluido */
             font-weight: 700;
             letter-spacing: 1px;
         }
@@ -95,7 +98,7 @@
             border-radius: 12px;
             outline: none;
             color: white;
-            font-size: 15px;
+            font-size: 16px; /* 16px evita el zoom automático en iOS */
             transition: all 0.3s;
         }
 
@@ -120,7 +123,7 @@
             flex: 1;
             padding: 12px;
             border-radius: 12px;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.15);
             cursor: pointer;
             font-size: 14px;
             color: white;
@@ -137,10 +140,9 @@
         }
 
         .role-card:hover {
-            background: rgba(255,255,255,0.25);
+            background: rgba(255, 255, 255, 0.25);
         }
 
-        /* Estilo cuando el radio está seleccionado */
         .role-card:has(input:checked) {
             background: white;
             color: #3f3f8c;
@@ -171,11 +173,7 @@
             background: #f8f9ff;
         }
 
-        button:active {
-            transform: translateY(-1px);
-        }
-
-        /* ERRORES DE LARAVEL */
+        /* ERRORES */
         .error-msg {
             background: rgba(255, 82, 82, 0.2);
             border: 1px solid #ff5252;
@@ -189,7 +187,28 @@
         .footer {
             margin-top: 25px;
             font-size: 12px;
-            opacity: 0.6;
+            opacity: 0.7;
+        }
+
+        /* MEDIA QUERIES PARA MÓVILES */
+        @media (max-width: 480px) {
+            .card {
+                padding: 30px 20px;
+                border-radius: 20px;
+            }
+            
+            .logo {
+                width: 80px;
+            }
+
+            .roles {
+                gap: 8px;
+            }
+
+            .role-card {
+                padding: 10px 5px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
@@ -203,7 +222,7 @@
 
     @if ($errors->any())
         <div class="error-msg">
-            Usuario o contraseña incorrectos
+            <i class="fas fa-exclamation-circle"></i> Usuario o contraseña incorrectos
         </div>
     @endif
 
@@ -220,13 +239,13 @@
 
         <div class="roles">
             <label class="role-card">
-                <input type="radio" name="rol_ui" checked>
+                <input type="radio" name="rol_ui" value="tecnico" checked>
                 <span>👨‍🔧</span>
                 Técnico
             </label>
 
             <label class="role-card">
-                <input type="radio" name="rol_ui">
+                <input type="radio" name="rol_ui" value="admin">
                 <span>👨‍💼</span>
                 Admin
             </label>

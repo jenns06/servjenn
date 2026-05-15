@@ -5,19 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Cliente; 
 
 class ClienteController extends Controller
 {
     /**
-     * 📄 LISTAR CLIENTES (Dinámico por Rol)
+     * 📄 LISTAR CLIENTES (Activos)
      */
     public function index(Request $request)
     {
         $buscar = $request->input('buscar');
         $user = Auth::user();
 
-        $query = DB::table('clientes')
-            ->join('dispositivos', 'clientes.id_cliente', '=', 'dispositivos.id_cliente')
+        $query = Cliente::join('dispositivos', 'clientes.id_cliente', '=', 'dispositivos.id_cliente')
             ->leftJoin('users', 'dispositivos.id_tecnico', '=', 'users.id')
             ->select(
                 'clientes.*',
@@ -29,7 +29,6 @@ class ClienteController extends Controller
                 'users.name as nombre_tecnico'
             );
 
-        // Seguridad: El técnico solo ve lo suyo, el Admin ve todo
         if ($user->role !== 'admin') {
             $query->where('dispositivos.id_tecnico', $user->id);
         }
@@ -70,17 +69,13 @@ class ClienteController extends Controller
             'tipo_pago' => 'required|in:efectivo,tarjeta,transferencia'
         ]);
 
-        // --- LÓGICA DE ASIGNACIÓN REAL ---
-        // Obtenemos el ID del técnico que está logueado en este momento (David, Tecnico, etc.)
         $idTecnicoResponsable = Auth::id();
 
-        // 1. Insertar Cliente
         $clienteId = DB::table('clientes')->insertGetId([
             'nombre' => $request->nombre,
             'telefono' => $request->telefono
         ]);
 
-        // 2. Insertar Dispositivo vinculado al técnico que lo crea
         $dispositivoId = DB::table('dispositivos')->insertGetId([
             'id_cliente' => $clienteId,
             'id_tecnico' => $idTecnicoResponsable, 
@@ -91,7 +86,6 @@ class ClienteController extends Controller
             'fecha_registro' => now()
         ]);
 
-        // 3. Registrar Pago inicial para contabilidad
         DB::table('pagos')->insert([
             'id_dispositivo' => $dispositivoId,
             'tipo_pago' => $request->tipo_pago,
@@ -108,8 +102,7 @@ class ClienteController extends Controller
     public function edit($id)
     {
         $user = Auth::user();
-        $query = DB::table('clientes')
-            ->join('dispositivos', 'clientes.id_cliente', '=', 'dispositivos.id_cliente')
+        $query = Cliente::join('dispositivos', 'clientes.id_cliente', '=', 'dispositivos.id_cliente')
             ->where('clientes.id_cliente', $id);
 
         if ($user->role !== 'admin') {
@@ -157,27 +150,60 @@ class ClienteController extends Controller
     }
 
     /**
-     * 🗑 ELIMINAR CLIENTE
+     * 🗑 ELIMINAR CLIENTE (Validación de Estado)
      */
     public function destroy($id)
     {
         $user = Auth::user();
-        $query = DB::table('dispositivos')->where('id_cliente', $id);
+        
+        // 1. Buscamos el dispositivo para ver en qué estado está
+        $dispositivo = DB::table('dispositivos')->where('id_cliente', $id)->first();
 
+        if ($dispositivo) {
+            // MENSAJE PERSONALIZADO SEGÚN EL ESTADO
+            if ($dispositivo->estado === 'pendiente') {
+                return redirect('/clientes')->with('error', '⚠️ No puedes eliminar este cliente. El equipo aún está PENDIENTE de revisión.');
+            }
+            
+            if ($dispositivo->estado === 'proceso') {
+                return redirect('/clientes')->with('error', '🚫 El trabajo está EN PROCESO. Debes finalizarlo antes de archivar al cliente.');
+            }
+        }
+
+        // 2. Buscamos el cliente para borrarlo (SoftDelete)
+        $cliente = Cliente::where('id_cliente', $id)->first();
+
+        if (!$cliente) {
+            return redirect('/clientes')->with('error', 'El registro no existe.');
+        }
+
+        // 3. Validación de técnicos
         if ($user->role !== 'admin') {
-            $query->where('id_tecnico', $user->id);
+            if ($dispositivo && $dispositivo->id_tecnico !== $user->id) {
+                return redirect('/clientes')->with('error', 'No tienes permiso sobre este cliente.');
+            }
         }
 
-        $dispositivo = $query->first();
+        $cliente->delete();
 
-        if (!$dispositivo) {
-            return redirect('/clientes')->with('error', 'No puedes eliminar este registro.');
-        }
+        return redirect('/clientes')->with('success', 'Cliente movido al historial correctamente 🗑');
+    }
 
-        DB::table('pagos')->where('id_dispositivo', $dispositivo->id_dispositivo)->delete();
-        DB::table('dispositivos')->where('id_cliente', $id)->delete();
-        DB::table('clientes')->where('id_cliente', $id)->delete();
+    /**
+     * 📦 VER HISTORIAL
+     */
+    public function archivo()
+    {
+        $clientesOcultos = Cliente::onlyTrashed()->get();
+        return view('clientes.archivo', compact('clientesOcultos'));
+    }
 
-        return redirect('/clientes')->with('success', 'Eliminado correctamente 🗑');
+    /**
+     * ♻️ RESTAURAR CLIENTE
+     */
+    public function restaurar($id)
+    {
+        Cliente::withTrashed()->where('id_cliente', $id)->restore();
+        return redirect()->route('clientes.archivo')->with('success', 'Cliente reincorporado a la lista activa ✔');
     }
 }

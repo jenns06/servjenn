@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Cliente; // <--- ASEGÚRATE DE AGREGAR ESTA LÍNEA
 
 class DashboardController extends Controller
 {
@@ -17,7 +18,10 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
         if ($user->role === 'admin') {
-            $totalClientes = DB::table('clientes')->count();
+            
+            // CAMBIO AQUÍ: Usamos el Modelo para que ignore los archivados automáticamente
+            $totalClientes = Cliente::count(); 
+            
             $totalDispositivos = DB::table('dispositivos')->count();
             $totalPagos = DB::table('pagos_tecnicos')->count();
             $totalIngresos = DB::table('dispositivos')->sum('precio');
@@ -38,9 +42,11 @@ class DashboardController extends Controller
                 ->groupBy('users.id', 'users.name')
                 ->get();
 
+            // CAMBIO AQUÍ: También filtramos los archivados en la lista de dispositivos recientes
             $dispositivos = DB::table('dispositivos')
                 ->leftJoin('clientes', 'dispositivos.id_cliente', '=', 'clientes.id_cliente')
                 ->leftJoin('users', 'dispositivos.id_tecnico', '=', 'users.id')
+                ->whereNull('clientes.deleted_at') // <--- AGREGAMOS ESTO PARA FILTRAR
                 ->select('dispositivos.*', 'clientes.nombre as cliente', 'users.name as tecnico')
                 ->latest('dispositivos.id_dispositivo')
                 ->limit(10)
@@ -55,12 +61,10 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | DASHBOARD TECNICO (Aquí estaba el error)
+        | DASHBOARD TECNICO
         |--------------------------------------------------------------------------
         */
         if ($user->role === 'tecnico') {
-            
-            // AGREGAMOS ESTA CONSULTA QUE FALTABA:
             $notificaciones = DB::table('notificaciones')
                 ->where('id_usuario', $user->id)
                 ->latest()
@@ -68,12 +72,12 @@ class DashboardController extends Controller
 
             $dispositivos = DB::table('dispositivos')
                 ->leftJoin('clientes', 'dispositivos.id_cliente', '=', 'clientes.id_cliente')
+                ->whereNull('clientes.deleted_at') // <--- FILTRAR AQUÍ TAMBIÉN
                 ->select('dispositivos.*', 'clientes.nombre as cliente')
                 ->where('dispositivos.id_tecnico', $user->id)
                 ->latest('dispositivos.id_dispositivo')
                 ->get();
 
-            // Pasamos 'notificaciones' a la vista
             return view('dashboard.tecnico', compact('notificaciones', 'dispositivos'));
         }
 

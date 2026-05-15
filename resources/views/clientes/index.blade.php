@@ -87,6 +87,7 @@
             color: #4338ca;
         }
 
+        /* --- BUSCADOR REHECHO PARA RESPONSIVO --- */
         .search-box {
             display: flex;
             gap: 10px;
@@ -96,6 +97,7 @@
             width: 100%;
             max-width: 400px;
             border: 1px solid #e2e8f0;
+            align-items: center;
         }
 
         .search-box input {
@@ -104,16 +106,20 @@
             outline: none;
             width: 100%;
             font-size: 14px;
+            color: var(--text-dark);
         }
 
         .search-box button {
             background: var(--primary-grad);
             border: none;
             color: white;
-            padding: 8px 15px;
+            padding: 10px 18px;
             border-radius: 10px;
             cursor: pointer;
+            transition: 0.3s;
         }
+
+        .search-box button:hover { opacity: 0.9; }
 
         .btn-nuevo {
             background: #22c55e;
@@ -131,6 +137,7 @@
 
         .btn-nuevo:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2); }
 
+        /* --- TABLA --- */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -190,21 +197,93 @@
 
         .btn-edit {
             color: #6366f1; background: #eef2ff;
-            width: 32px; height: 32px;
+            width: 35px; height: 35px;
             display: flex; align-items: center; justify-content: center;
             border-radius: 8px; text-decoration: none;
         }
 
         .btn-delete {
             color: #f43f5e; background: #fff1f2;
-            width: 32px; height: 32px;
+            width: 35px; height: 35px;
             display: flex; align-items: center; justify-content: center;
             border-radius: 8px; border: none; cursor: pointer;
         }
 
+        .archivo-card {
+            margin-top: 40px;
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 20px;
+            border: 1px dashed #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: 0.3s;
+        }
+
+        /* --- RESPONSIVO --- */
         @media (max-width: 768px) {
-            .header-flex { flex-direction: column; }
-            .search-box { max-width: 100%; }
+            body { padding: 15px 10px; }
+            .container { padding: 25px 15px; border-radius: 20px; }
+            
+            .header-flex { 
+                flex-direction: column; 
+                align-items: stretch; 
+                gap: 15px;
+                text-align: center;
+            }
+
+            .search-box { 
+                max-width: 100%; 
+                margin: 0;
+            }
+
+            .btn-nuevo { 
+                width: 100%; 
+                justify-content: center; 
+            }
+
+            /* Tabla a tarjetas */
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            
+            tr { 
+                border: 1px solid #e2e8f0; 
+                margin-bottom: 20px; 
+                border-radius: 20px;
+                padding: 10px;
+                background: white;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            }
+
+            td { 
+                border: none;
+                position: relative;
+                padding-left: 45% !important;
+                text-align: right;
+                padding-top: 12px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid #f8fafc;
+            }
+
+            td:last-child { border-bottom: none; }
+
+            td::before { 
+                content: attr(data-label);
+                position: absolute;
+                left: 15px;
+                width: 40%;
+                font-weight: 700;
+                text-align: left;
+                color: #64748b;
+                font-size: 11px;
+                text-transform: uppercase;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+
+            .acciones { justify-content: flex-end; }
+            .archivo-card { flex-direction: column; text-align: center; gap: 20px; }
         }
     </style>
 </head>
@@ -232,19 +311,20 @@
         </a>
     </div>
 
+    {{-- ALERTAS SWEETALERT --}}
     @if(session('success'))
         <script>
-            Swal.fire({
-                icon: 'success',
-                title: '¡Actualizado!',
-                text: "{{ session('success') }}",
-                timer: 2500,
-                showConfirmButton: false
-            });
+            Swal.fire({ icon: 'success', title: 'Hecho', text: "{{ session('success') }}", timer: 2000, showConfirmButton: false });
         </script>
     @endif
 
-    <div style="overflow-x: auto;">
+    @if(session('error'))
+        <script>
+            Swal.fire({ icon: 'error', title: 'Atención', text: "{{ session('error') }}", confirmButtonColor: '#6366f1' });
+        </script>
+    @endif
+
+    <div class="table-responsive">
         <table>
             <thead>
                 <tr>
@@ -258,25 +338,24 @@
             <tbody>
                 @forelse($clientes as $cliente)
                     <tr>
-                        <td>
+                        <td data-label="Cliente">
                             <a href="/clientes/{{ $cliente->id_cliente }}" class="cliente-link">
                                 {{ $cliente->nombre }}
                             </a>
                         </td>
-                        <td>
+                        <td data-label="Dispositivo">
                             <span class="dispositivo-tag">
-                                <i class="fa-solid fa-microchip" style="font-size: 11px; opacity: 0.7;"></i>
-                                {{ $cliente->tipo ?? 'No especificado' }}
+                                <i class="fa-solid fa-microchip"></i> {{ $cliente->tipo ?? 'N/A' }}
                             </span>
                         </td>
-                        <td>{{ $cliente->telefono }}</td>
-                        <td>
+                        <td data-label="Teléfono">{{ $cliente->telefono }}</td>
+                        <td data-label="Estado">
                             @php $estadoClase = strtolower($cliente->estado ?? 'pendiente'); @endphp
                             <span class="estado {{ $estadoClase }}">
                                 {{ ucfirst($cliente->estado ?? 'pendiente') }}
                             </span>
                         </td>
-                        <td>
+                        <td data-label="Acciones">
                             <div class="acciones">
                                 <a href="/clientes/{{ $cliente->id_cliente }}/edit" class="btn-edit" title="Editar">
                                     <i class="fa-solid fa-pen"></i>
@@ -284,7 +363,7 @@
                                 <form action="/clientes/{{ $cliente->id_cliente }}" method="POST" id="delete-form-{{ $cliente->id_cliente }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="button" class="btn-delete" onclick="confirmDelete({{ $cliente->id_cliente }})">
+                                    <button type="button" class="btn-delete" onclick="confirmDelete({{ $cliente->id_cliente }}, '{{ $cliente->estado }}')">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>
@@ -294,31 +373,54 @@
                 @empty
                     <tr>
                         <td colspan="5" style="text-align: center; padding: 40px; color: #94a3b8;">
-                            No hay clientes que coincidan con la búsqueda.
+                            No se encontraron resultados.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+
+    <div class="archivo-card">
+        <div style="display: flex; align-items: center; gap: 15px; text-align: left;">
+            <div style="width: 50px; height: 50px; background: #e0e7ff; color: #6366f1; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 20px;">
+                <i class="fa-solid fa-box-archive"></i>
+            </div>
+            <div>
+                <h2 style="font-size: 18px; color: #1e293b;">Historial</h2>
+                <p style="font-size: 13px; color: #64748b;">Equipos terminados.</p>
+            </div>
+        </div>
+        <a href="{{ route('clientes.archivo') }}" style="background: white; color: #6366f1; text-decoration: none; padding: 10px 20px; border-radius: 12px; font-weight: 600; border: 1px solid #e0e7ff; display: flex; align-items: center; gap: 8px;">
+            Ver Archivo <i class="fa-solid fa-clock-rotate-left"></i>
+        </a>
+    </div>
 </div>
 
 <script>
-    function confirmDelete(id) {
+    function confirmDelete(id, estado) {
+        const est = estado.toLowerCase();
+        if (est === 'proceso' || est === 'pendiente') {
+            Swal.fire({
+                icon: 'error',
+                title: 'No se puede archivar',
+                text: 'El equipo todavía está en ' + est.toUpperCase() + '.',
+                confirmButtonColor: '#6366f1'
+            });
+            return;
+        }
+
         Swal.fire({
-            title: '¿Eliminar registro?',
-            text: "Se borrarán los datos del cliente y su historial.",
+            title: '¿Archivar cliente?',
+            text: "Se moverá al historial.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#f43f5e',
+            confirmButtonColor: '#6366f1',
             cancelButtonColor: '#94a3b8',
-            confirmButtonText: 'Sí, borrar',
-            cancelButtonText: 'Cancelar'
+            confirmButtonText: 'Sí, archivar'
         }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('delete-form-' + id).submit();
-            }
-        })
+            if (result.isConfirmed) document.getElementById('delete-form-' + id).submit();
+        });
     }
 </script>
 
