@@ -6,212 +6,385 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+<style>
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+        font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    html{
+        width:100%;
+        min-height:100%;
+        overflow-x:hidden;
+    }
+
+    body{
+        min-height:100vh;
+        width:100%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:40px 16px;
+        position:relative;
+        overflow-x:hidden;
+
+        background:
+        linear-gradient(135deg,#6c7cff 0%,#3f3f8c 100%);
+        
+        background-size:cover;
+        background-attachment:fixed;
+    }
+
+    /* BURBUJAS */
+    body::before,
+    body::after{
+        content:"";
+        position:absolute;
+        width:300px;
+        height:300px;
+        border-radius:50%;
+        background:rgba(255,255,255,0.08);
+        z-index:-1;
+        pointer-events:none;
+        filter:blur(10px);
+    }
+
+    body::before{
+        top:0;
+        left:0;
+        transform:translate(-35%,-35%);
+    }
+
+    body::after{
+        bottom:0;
+        right:0;
+        transform:translate(35%,35%);
+    }
+
+    /* CARD */
+    .card{
+        width:100%;
+        max-width:400px;
+
+        padding:40px 30px;
+
+        border-radius:24px;
+
+        background:rgba(255,255,255,0.12);
+
+        backdrop-filter:blur(20px);
+        -webkit-backdrop-filter:blur(20px);
+
+        border:1px solid rgba(255,255,255,0.2);
+
+        box-shadow:0 25px 50px rgba(0,0,0,0.3);
+
+        text-align:center;
+        color:white;
+
+        animation:fadeIn .8s ease-out;
+
+        overflow:hidden;
+    }
+
+    @keyframes fadeIn{
+        from{
+            opacity:0;
+            transform:translateY(20px);
         }
 
-        body {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #6c7cff 0%, #3f3f8c 100%);
-            /* Permitir scroll en pantallas muy pequeñas o con teclado abierto */
-            overflow-x: hidden;
-            padding: 20px;
+        to{
+            opacity:1;
+            transform:translateY(0);
+        }
+    }
+
+    /* LOGO */
+    .logo{
+        width:100px;
+        max-width:100%;
+        height:auto;
+
+        margin-bottom:15px;
+
+        filter:drop-shadow(0 8px 12px rgba(0,0,0,0.3));
+
+        transition:transform .3s ease;
+    }
+
+    .logo:hover{
+        transform:scale(1.05) rotate(2deg);
+    }
+
+    h2{
+        margin-bottom:8px;
+
+        font-size:clamp(1.5rem,5vw,2rem);
+
+        font-weight:700;
+
+        letter-spacing:1px;
+    }
+
+    p{
+        font-size:14px;
+        opacity:.9;
+        margin-bottom:25px;
+        line-height:1.5;
+    }
+
+    /* INPUTS */
+    .input-group{
+        margin-bottom:15px;
+        text-align:left;
+    }
+
+    input{
+        width:100%;
+
+        padding:14px 16px;
+
+        border-radius:12px;
+
+        border:1px solid rgba(255,255,255,0.2);
+
+        background:rgba(255,255,255,0.1);
+
+        color:white;
+
+        outline:none;
+
+        font-size:16px;
+
+        transition:.3s;
+    }
+
+    input::placeholder{
+        color:rgba(255,255,255,0.7);
+    }
+
+    input:focus{
+        background:rgba(255,255,255,0.2);
+
+        border-color:white;
+
+        box-shadow:0 0 15px rgba(255,255,255,0.15);
+    }
+
+    /* ROLES */
+    .roles{
+        display:grid;
+
+        grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
+
+        gap:10px;
+
+        margin:20px 0;
+    }
+
+    .role-card{
+        padding:14px 8px;
+
+        border-radius:14px;
+
+        background:rgba(255,255,255,0.15);
+
+        border:1px solid rgba(255,255,255,0.1);
+
+        color:white;
+
+        font-size:13px;
+
+        cursor:pointer;
+
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+
+        gap:6px;
+
+        text-align:center;
+
+        transition:all .3s ease;
+
+        min-height:85px;
+    }
+
+    .role-card:hover{
+        transform:translateY(-2px);
+
+        background:rgba(255,255,255,0.25);
+    }
+
+    .role-card input{
+        display:none;
+    }
+
+    .role-card:has(input:checked){
+        background:white;
+        color:#3f3f8c;
+
+        font-weight:bold;
+
+        box-shadow:0 8px 18px rgba(0,0,0,0.2);
+    }
+
+    /* BOTÓN */
+    button{
+        width:100%;
+
+        padding:14px;
+
+        margin-top:10px;
+
+        border:none;
+
+        border-radius:12px;
+
+        background:white;
+
+        color:#3f3f8c;
+
+        font-size:16px;
+        font-weight:800;
+
+        text-transform:uppercase;
+
+        letter-spacing:1px;
+
+        cursor:pointer;
+
+        transition:.3s;
+    }
+
+    button:hover{
+        transform:translateY(-3px);
+
+        background:#f8f9ff;
+
+        box-shadow:0 12px 25px rgba(0,0,0,0.3);
+    }
+
+    /* ERRORES */
+    .error-msg{
+        background:rgba(255,82,82,0.2);
+
+        border:1px solid #ff5252;
+
+        padding:10px;
+
+        border-radius:10px;
+
+        font-size:13px;
+
+        color:#ffdede;
+
+        margin-bottom:15px;
+
+        text-align:left;
+    }
+
+    .footer{
+        margin-top:25px;
+
+        font-size:12px;
+
+        opacity:.7;
+
+        line-height:1.5;
+    }
+
+    /* TABLETS */
+    @media(max-width:768px){
+
+        body{
+            padding:30px 14px;
         }
 
-        /* Burbujas decorativas */
-        body::before, body::after {
-            content: "";
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            z-index: -1;
+        .card{
+            max-width:450px;
         }
-        body::before { top: -100px; left: -100px; }
-        body::after { bottom: -100px; right: -100px; }
+    }
 
-        /* TARJETA GLASSMORPHISM RESPONSIVE */
-        .card {
-            width: 100%;
-            max-width: 400px; /* Ancho máximo para escritorio */
-            padding: 40px 30px;
-            border-radius: 24px;
-            background: rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            text-align: center;
-            color: white;
-            animation: fadeIn 0.8s ease-out;
+    /* CELULARES */
+    @media(max-width:480px){
+
+        body{
+            padding:20px 12px;
+            align-items:center;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        body::before,
+        body::after{
+            display:none;
         }
 
-        .logo {
-            width: 100px;
-            height: auto;
-            margin-bottom: 15px;
-            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
-            transition: transform 0.3s ease;
+        .card{
+            padding:30px 20px;
+
+            border-radius:20px;
         }
 
-        .logo:hover {
-            transform: scale(1.05) rotate(2deg);
+        .logo{
+            width:80px;
         }
 
-        h2 {
-            margin-bottom: 5px;
-            font-size: clamp(1.5rem, 5vw, 1.8rem); /* Tamaño fluido */
-            font-weight: 700;
-            letter-spacing: 1px;
+        h2{
+            font-size:1.5rem;
         }
 
-        p {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 25px;
+        p{
+            font-size:13px;
         }
 
-        /* INPUTS */
-        .input-group {
-            margin-bottom: 15px;
-            text-align: left;
+        .roles{
+            grid-template-columns:1fr 1fr;
+            gap:8px;
         }
 
-        input {
-            width: 100%;
-            padding: 14px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            outline: none;
-            color: white;
-            font-size: 16px; /* 16px evita el zoom automático en iOS */
-            transition: all 0.3s;
+        .role-card{
+            min-height:75px;
+            font-size:12px;
+            padding:10px 6px;
         }
 
-        input::placeholder {
-            color: rgba(255,255,255,0.7);
+        button{
+            font-size:15px;
+        }
+    }
+
+    /* CELULARES MUY PEQUEÑOS */
+    @media(max-width:340px){
+
+        .card{
+            padding:25px 16px;
         }
 
-        input:focus {
-            background: rgba(255,255,255,0.2);
-            border-color: white;
-            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        .roles{
+            grid-template-columns:1fr;
         }
 
-        /* ROLES */
-        .roles {
-            display: flex;
-            gap: 12px;
-            margin: 20px 0;
+        .role-card{
+            flex-direction:row;
+            justify-content:center;
+
+            min-height:auto;
+
+            gap:10px;
         }
 
-        .role-card {
-            flex: 1;
-            padding: 12px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.15);
-            cursor: pointer;
-            font-size: 14px;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            transition: 0.3s;
-            border: 1px solid rgba(255,255,255,0.1);
+        input{
+            padding:12px;
         }
 
-        .role-card input {
-            display: none;
+        button{
+            padding:12px;
         }
-
-        .role-card:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .role-card:has(input:checked) {
-            background: white;
-            color: #3f3f8c;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        /* BOTÓN */
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            background: white;
-            color: #3f3f8c;
-            font-weight: 800;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 25px rgba(0,0,0,0.3);
-            background: #f8f9ff;
-        }
-
-        /* ERRORES */
-        .error-msg {
-            background: rgba(255, 82, 82, 0.2);
-            border: 1px solid #ff5252;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            margin-bottom: 15px;
-            color: #ffdbdb;
-        }
-
-        .footer {
-            margin-top: 25px;
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        /* MEDIA QUERIES PARA MÓVILES */
-        @media (max-width: 480px) {
-            .card {
-                padding: 30px 20px;
-                border-radius: 20px;
-            }
-            
-            .logo {
-                width: 80px;
-            }
-
-            .roles {
-                gap: 8px;
-            }
-
-            .role-card {
-                padding: 10px 5px;
-                font-size: 13px;
-            }
-        }
-    </style>
-</head>
+    }
+</style>
 <body>
 
 <div class="card">
